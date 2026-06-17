@@ -46,6 +46,12 @@ exports.handler = async function(event, context) {
       const emailLower = email.toLowerCase().trim();
       const passClean = pass.trim();
 
+      console.log('Total rows:', rows.length);
+      console.log('Buscando email:', emailLower, 'pass:', passClean);
+      rows.slice(1).forEach((row, i) => {
+        console.log(`Fila ${i+2}: email="${(row[2]||'').toLowerCase().trim()}" pass="${(row[6]||'').trim()}"`);
+      });
+
       const userRow = rows.slice(1).find(row => {
         const rowEmail = (row[2] || '').toLowerCase().trim();
         const rowPass = (row[6] || '').trim();
