@@ -101,6 +101,9 @@ exports.handler = async function(event, context) {
     });
 
     const data = await response.json();
+    if (!response.ok) {
+      console.log('ANTHROPIC ERROR:', response.status, JSON.stringify(data));
+    }
     return { statusCode: 200, headers, body: JSON.stringify(data) };
 
   } catch (error) {
