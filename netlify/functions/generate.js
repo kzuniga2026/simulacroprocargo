@@ -34,7 +34,7 @@ exports.handler = async function(event, context) {
       const token = await getAccessToken(serviceAccount);
 
       const SHEET_ID = process.env.GOOGLE_SHEET_ID;
-      const RANGE = 'Respuestas de formulario 1!A:I';
+      const RANGE = 'Clientes!A:I';
       const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(RANGE)}`;
 
       const sheetResp = await fetch(url, {
