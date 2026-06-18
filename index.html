@@ -437,13 +437,43 @@ function startApp(){
 }
 function startAppSinDoc(){docText='';docName='';startApp();}
 
-async function callClaude(prompt){
-  const resp=await fetch('/.netlify/functions/generate',{
+// jobId único por sesión de generación (identifica este simulacro en el guardadero)
+let JOB_ID = null;
+
+// Dispara el motor de fondo para una parte (no espera el resultado).
+async function dispararParte(index, prompt){
+  await fetch('/.netlify/functions/generate-background',{
     method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({prompt})
+    body:JSON.stringify({ jobId: JOB_ID, index, prompt })
   });
-  const data=await resp.json();
-  return data.content.map(c=>c.text||'').join('');
+}
+
+// Espera (consultando el guardadero) hasta que una parte esté lista.
+// Devuelve el texto crudo de la IA, o lanza error si la parte falló.
+async function esperarParte(index){
+  const MAX_INTENTOS = 90;     // 90 intentos
+  const ESPERA_MS    = 4000;   // cada 4s = hasta 6 minutos por parte
+  for(let intento=0; intento<MAX_INTENTOS; intento++){
+    await new Promise(r=>setTimeout(r, ESPERA_MS));
+    try{
+      const resp=await fetch('/.netlify/functions/status',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ jobId: JOB_ID, index })
+      });
+      const data=await resp.json();
+      if(data.listo){
+        if(data.resultado && data.resultado.ok){
+          return data.resultado.text;
+        } else {
+          throw new Error('La parte '+index+' falló: '+((data.resultado&&data.resultado.error)||'desconocido'));
+        }
+      }
+    }catch(e){
+      if(e.message && e.message.indexOf('La parte')===0) throw e;
+      // error de red puntual: reintenta en el siguiente ciclo
+    }
+  }
+  throw new Error('Tiempo agotado esperando la parte '+index);
 }
 
 async function generateBatch(planEntry, globalStart){
@@ -521,10 +551,16 @@ RESPONDE SOLO con JSON válido sin texto adicional ni markdown:
 
 Índices exactos: ${letters.map((l,i)=>`P${i+1} correct=${['A','B','C','D'].indexOf(l)}`).join(', ')}.`;
 
-  const text = await callClaude(prompt);
+  // Devolvemos el prompt armado. La IA la llama el motor de fondo.
+  return { prompt, letters, blk, tema, normativa, qty, globalStart };
+}
+
+// Procesa el texto crudo que devolvió la IA y aplica la auto-corrección de letras.
+// (Esta es exactamente la lógica que antes estaba al final de generateBatch.)
+function procesarTexto(text, info){
+  const { letters, blk, tema, normativa, qty, globalStart } = info;
   const arr = JSON.parse(text.replace(/```json|```/g,'').trim());
 
-  // AUTO-CORRECCIÓN: si la IA desvió alguna letra, hacemos swap
   return arr.slice(0,qty).map((q,i)=>{
     const expectedIdx = ['A','B','C','D'].indexOf(letters[i]);
     if(q.correct !== expectedIdx){
@@ -563,21 +599,46 @@ function expandirPlan(plan){
 async function loadAll(){
   if(generating)return;
   generating=true;
-  let globalNum=1;
+
+  // jobId único para esta generación
+  JOB_ID = (user.email.replace(/[^a-z0-9]/gi,'_')) + '_' + Date.now();
 
   const PLAN_EXPANDIDO = expandirPlan(PLAN);
 
-  for(const planEntry of PLAN_EXPANDIDO){
-    if(globalNum>160)break;
+  // ── FASE 1: armar cada parte y DISPARARLA al motor de fondo (en tandas) ──
+  const partes = [];
+  let globalNum = 1;
+  for(let i=0; i<PLAN_EXPANDIDO.length; i++){
+    if(globalNum>160) break;
+    const info = generateBatch(PLAN_EXPANDIDO[i], globalNum);
+    partes.push(info);
+    globalNum += info.qty;
+  }
+  // Disparar en tandas de 5 con una pausa, para no saturar la API de Anthropic.
+  const TANDA = 5;
+  for(let i=0; i<partes.length; i+=TANDA){
+    const grupo = partes.slice(i, i+TANDA);
+    await Promise.all(grupo.map((info, j)=>{
+      return dispararParte(i+j, info.prompt).catch(e=>console.error('No se pudo disparar parte '+(i+j), e));
+    }));
+    await new Promise(r=>setTimeout(r, 1500));
+  }
+
+  // ── FASE 2: recoger cada parte en orden y mostrarla apenas llega ──
+  for(let i=0; i<partes.length; i++){
     try{
-      const batch = await generateBatch(planEntry, globalNum);
+      const text = await esperarParte(i);
+      const batch = procesarTexto(text, partes[i]);
       questions.push(...batch);
-      globalNum += batch.length;
       updateProg(questions.length);
       actualizarCalidad();
       renderQ();renderMM();renderBP();
-    }catch(e){console.error('Error batch globalNum='+globalNum,e);}
+    }catch(e){
+      console.error('Error en parte '+i, e);
+      // seguimos con las demás partes aunque una falle
+    }
   }
+
   generating=false;
   actualizarCalidad();
   updateStats();
