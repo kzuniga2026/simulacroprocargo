@@ -1,32 +1,52 @@
 // ════════════════════════════════════════════════════════════
 // MOTOR DE GENERACIÓN EN SEGUNDO PLANO (Background Function)
-// Puede correr hasta 15 minutos (no se corta a los 10s como las normales).
-// Recibe UN prompt (un bloque de preguntas), lo genera con la IA,
-// y guarda el resultado en el guardadero (Netlify Blobs).
-// El navegador NO espera esta respuesta: consulta el guardadero con status.js.
+// Puede correr hasta 15 minutos. Recibe UN prompt (un bloque),
+// lo genera con la IA, y guarda el resultado en Netlify Blobs.
 // ════════════════════════════════════════════════════════════
 const { getStore } = require('@netlify/blobs');
 
+// Lee el cuerpo de la petición de forma robusta. Las funciones background
+// de Netlify a veces entregan el body distinto a las normales, así que
+// intentamos varias formas para ser tolerantes.
+async function leerBody(req, event) {
+  // 1) Formato "moderno" (req es un Request web con .json())
+  if (req && typeof req.json === 'function') {
+    try {
+      return await req.json();
+    } catch (e) { /* sigue intentando */ }
+  }
+  // 2) Formato "clásico" (event.body como string)
+  if (event && typeof event.body === 'string' && event.body.length) {
+    try {
+      return JSON.parse(event.body);
+    } catch (e) { /* sigue intentando */ }
+  }
+  // 3) event.body ya como objeto
+  if (event && event.body && typeof event.body === 'object') {
+    return event.body;
+  }
+  return null;
+}
+
 exports.handler = async function(event) {
-  // Las background functions solo responden 202 (encolado). El trabajo real
-  // ocurre aquí y el resultado se deja en el guardadero.
-  let payload;
-  try {
-    payload = JSON.parse(event.body || '{}');
-  } catch (e) {
-    console.log('BG ERROR: body inválido', e.message);
+  const payload = await leerBody(event, event);
+
+  if (!payload) {
+    console.log('BG ERROR: no se pudo leer el body');
     return { statusCode: 202 };
   }
 
-  const { jobId, index, prompt } = payload;
+  const jobId  = payload.jobId;
+  const index  = payload.index;
+  const prompt = payload.prompt;
 
-  if (!jobId || index === undefined || !prompt) {
-    console.log('BG ERROR: faltan datos', JSON.stringify({ jobId, index, tienePrompt: !!prompt }));
+  if (!jobId || index === undefined || index === null || !prompt) {
+    console.log('BG ERROR: faltan datos | jobId=' + jobId + ' index=' + index + ' promptLen=' + (prompt ? prompt.length : 0));
     return { statusCode: 202 };
   }
 
   const store = getStore('simulacros');
-  const key = `${jobId}/parte-${index}`;
+  const key = jobId + '/parte-' + index;
 
   try {
     const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -51,10 +71,8 @@ exports.handler = async function(event) {
       return { statusCode: 202 };
     }
 
-    const text = (data.content || []).map(c => c.text || '').join('');
-    // Guardamos el texto crudo de la IA. El navegador lo parsea y auto-corrige,
-    // igual que hacía antes (esa lógica no cambia).
-    await store.setJSON(key, { ok: true, text });
+    const text = (data.content || []).map(function(c){ return c.text || ''; }).join('');
+    await store.setJSON(key, { ok: true, text: text });
     console.log('BG OK guardó', key, 'len=', text.length);
 
   } catch (error) {
