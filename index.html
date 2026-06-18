@@ -543,12 +543,31 @@ RESPONDE SOLO con JSON válido sin texto adicional ni markdown:
   }));
 }
 
+// Parte cualquier bloque grande en sub-bloques de máximo MAX_QTY preguntas,
+// para que cada llamada termine dentro del límite de tiempo de la función (60s).
+function expandirPlan(plan){
+  const MAX_QTY = 6;
+  const out = [];
+  for(const entry of plan){
+    const [blk, tema, normativa, qty] = entry;
+    let restante = qty;
+    while(restante > 0){
+      const trozo = Math.min(MAX_QTY, restante);
+      out.push([blk, tema, normativa, trozo]);
+      restante -= trozo;
+    }
+  }
+  return out;
+}
+
 async function loadAll(){
   if(generating)return;
   generating=true;
   let globalNum=1;
 
-  for(const planEntry of PLAN){
+  const PLAN_EXPANDIDO = expandirPlan(PLAN);
+
+  for(const planEntry of PLAN_EXPANDIDO){
     if(globalNum>160)break;
     try{
       const batch = await generateBatch(planEntry, globalNum);
@@ -556,7 +575,7 @@ async function loadAll(){
       globalNum += batch.length;
       updateProg(questions.length);
       actualizarCalidad();
-      if(questions.length<=planEntry[3]){renderQ();renderMM();renderBP();}
+      renderQ();renderMM();renderBP();
     }catch(e){console.error('Error batch globalNum='+globalNum,e);}
   }
   generating=false;
