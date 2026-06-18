@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SimulaProCargo — Concursos CNSC</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;background:#f0f4f8;color:#1a1a2e;min-height:100vh}
+#s-login{max-width:440px;margin:32px auto;padding:16px}
+.card{background:#fff;border-radius:14px;padding:28px;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.brand-icon{width:38px;height:38px;background:#1a3a6b;border-radius:9px;display:flex;align-items:center;justify-content:center;color:#f0c040;font-size:15px;font-weight:900;flex-shrink:0}
+.brand h2{font-size:14px;font-weight:700}.brand p{font-size:11px;color:#6b7280}
+h1{font-size:19px;font-weight:700;margin-bottom:5px}
+.sub{font-size:12px;color:#6b7280;margin-bottom:20px;line-height:1.55}
+.field{margin-bottom:13px}
+.field label{display:block;font-size:11px;font-weight:700;color:#374151;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.field input{width:100%;padding:9px 12px;border:1.5px solid #e5e7eb;border-radius:8px;background:#f9fafb;color:#1a1a2e;font-size:13px;font-family:inherit;outline:none;transition:border-color .15s}
+.field input:focus{border-color:#1a4f9c;background:#fff}
+.btn{width:100%;padding:10px;background:#1a4f9c;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;margin-top:4px}
+.btn:hover{background:#163d7a}.btn:disabled{opacity:.5;cursor:not-allowed}
+.err{background:#fee2e2;border:1px solid #fca5a5;color:#991b1b;border-radius:8px;padding:8px 12px;font-size:12px;margin-bottom:12px;display:none}
+.err.show{display:block}
+.login-footer{text-align:center;margin-top:16px;font-size:12px;color:#6b7280}
+#s-upload{max-width:520px;margin:24px auto;padding:16px;display:none}
+.upload-card{background:#fff;border-radius:14px;padding:28px;box-shadow:0 4px 20px rgba(0,0,0,.1)}
+.drop-zone{border:2px dashed #d1d5db;border-radius:10px;padding:32px 16px;text-align:center;cursor:pointer;transition:all .2s;background:#f9fafb;position:relative}
+.drop-zone:hover,.drop-zone.over{border-color:#1a4f9c;background:#eff6ff}
+.drop-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.drop-icon{font-size:36px;margin-bottom:10px}.drop-title{font-size:14px;font-weight:700;margin-bottom:4px}.drop-sub{font-size:12px;color:#6b7280}
+.file-ok{background:#f0fdf4;border:1px solid #6ee7b7;border-radius:8px;padding:11px 13px;margin-top:10px;display:none;align-items:center;gap:9px}
+.file-ok.show{display:flex}
+.tip-box{background:#eff6ff;border-left:4px solid #1a4f9c;border-radius:0 8px 8px 0;padding:10px 14px;font-size:12px;color:#1e40af;margin:14px 0;line-height:1.6}
+.skip-link{text-align:center;margin-top:12px;font-size:12px;color:#6b7280}
+.skip-link a{color:#1a4f9c;cursor:pointer;text-decoration:underline}
+#s-app{display:none;max-width:860px;margin:0 auto;padding:12px}
+.app-hdr{background:linear-gradient(135deg,#1a3a6b,#0f2444);color:#fff;padding:14px 18px;border-radius:12px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+.app-hdr h1{font-size:14px;font-weight:700}.app-hdr p{font-size:11px;opacity:.8;margin-top:2px}
+.app-hdr-r{display:flex;align-items:center;gap:8px}
+.doc-badge{font-size:11px;background:#166534;color:#d1fae5;border-radius:20px;padding:3px 10px;font-weight:600}
+.ubadge{font-size:11px;background:rgba(255,255,255,.15);color:#fff;border-radius:20px;padding:3px 10px}
+.exit-btn{font-size:11px;padding:3px 10px;border-radius:20px;border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;cursor:pointer}
+.sbar{background:#1a3a6b;color:#fff;padding:8px 16px;border-radius:8px;display:flex;gap:16px;flex-wrap:wrap;font-size:12px;border-bottom:3px solid #f0c040;margin-bottom:10px}
+.si{display:flex;align-items:center;gap:5px}.sd{width:9px;height:9px;border-radius:50%}.sv{font-weight:800;font-size:14px}
+.prog-w{background:#fff;padding:10px 16px;border-radius:8px;border:1px solid #e5e7eb;margin-bottom:10px}
+.prog-l{display:flex;justify-content:space-between;font-size:11px;color:#6b7280;margin-bottom:5px}
+.prog-bg{height:8px;background:#e0e7ff;border-radius:4px;overflow:hidden}
+.prog-f{height:100%;background:linear-gradient(90deg,#3b82f6,#1a4f9c);border-radius:4px;transition:width .4s}
+.elim{margin-bottom:10px;padding:9px 13px;border-radius:8px;font-size:12px;font-weight:700;display:flex;align-items:center;gap:7px}
+.ep{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7}
+.ef{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.en{background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+.calidad-panel{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:13px;margin-bottom:10px}
+.calidad-panel h3{font-size:10px;font-weight:800;text-transform:uppercase;color:#6b7280;letter-spacing:.05em;margin-bottom:10px}
+.calidad-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.cal-box{border-radius:8px;padding:8px;text-align:center;border:1px solid #e5e7eb}
+.cal-box .letra{font-size:15px;font-weight:800}.cal-box .cnt{font-size:18px;font-weight:800;margin:2px 0}.cal-box .pct{font-size:11px;color:#6b7280}
+.cal-box.ok{background:#f0fdf4;border-color:#6ee7b7}.cal-box.warn{background:#fef3c7;border-color:#fcd34d}.cal-box.bad{background:#fee2e2;border-color:#fca5a5}
+.calidad-status{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;font-size:12px;font-weight:700}
+.calidad-status.pass{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7}
+.calidad-status.fail{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5}
+.calidad-status.pending{background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
+.filters{background:#fff;padding:9px 13px;border-radius:8px;border:1px solid #e5e7eb;display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.fb{padding:4px 11px;border-radius:20px;border:2px solid #e5e7eb;background:#fff;font-size:11px;cursor:pointer;font-weight:700;color:#6b7280}
+.fb.active{background:#1a4f9c;color:#fff;border-color:#1a4f9c}
+.qcard{background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08);padding:18px;margin-bottom:10px}
+.qmeta{display:flex;align-items:center;gap:6px;margin-bottom:9px;flex-wrap:wrap}
+.bb{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:800;color:#fff}
+.tb{font-size:10px;padding:2px 8px;border-radius:20px;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1}
+.norm-badge{font-size:10px;padding:2px 8px;border-radius:20px;background:#fef3c7;color:#92400e;border:1px solid #fcd34d}
+.qctr{font-size:11px;color:#6b7280;margin-bottom:7px}
+.qtxt{font-size:13px;line-height:1.65;font-weight:600;margin-bottom:14px;color:#1e293b}
+.opts{display:flex;flex-direction:column;gap:7px}
+.opt{display:flex;align-items:flex-start;gap:9px;padding:11px 13px;border-radius:8px;border:2px solid #e2e8f0;cursor:pointer;text-align:left;font-size:12px;line-height:1.55;background:#f8fafc;width:100%;transition:all .15s}
+.opt:hover:not(:disabled){border-color:#3b82f6;background:#eff6ff}
+.opt:disabled{cursor:default}
+.ol{font-weight:800;font-size:12px;min-width:18px;color:#64748b}
+.opt.ok{background:#f0fdf4;border-color:#16a34a!important;color:#14532d}
+.opt.ok .ol{color:#16a34a}
+.opt.bad{background:#fef2f2;border-color:#dc2626!important;color:#7f1d1d}
+.opt.bad .ol{color:#dc2626}
+.opt.grey{opacity:.5}
+.sust{margin-top:12px;padding:12px 14px;background:#f0fdf4;border-radius:8px;border-left:4px solid #16a34a;font-size:12px;line-height:1.7;color:#14532d;display:none}
+.sust.show{display:block}
+.sl{font-weight:800;font-size:10px;text-transform:uppercase;margin-bottom:4px;color:#15803d}
+.nav{background:#fff;padding:10px 14px;border-radius:8px;border:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.nb{padding:8px 18px;border-radius:8px;border:none;font-size:12px;font-weight:700;cursor:pointer}
+.nb.prev{background:#f1f5f9;color:#475569}.nb.next{background:#1a4f9c;color:#fff}
+.nb:disabled{opacity:.4;cursor:not-allowed}
+.ni{font-size:12px;color:#6b7280;font-weight:600}
+.bprog{background:#fff;border-radius:10px;border:1px solid #e5e7eb;padding:13px;margin-bottom:10px}
+.bprog h3{font-size:10px;font-weight:800;text-transform:uppercase;color:#6b7280;letter-spacing:.05em;margin-bottom:9px}
+.bpr{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.bpl{width:130px;color:#475569;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px}
+.bpb{flex:1;height:5px;background:#e5e7eb;border-radius:3px;overflow:hidden}
+.bpf{height:100%;border-radius:3px;transition:width .4s}
+.bpp{width:32px;text-align:right;font-weight:800;font-size:11px}
+.mmap{background:#f8fafc;border-radius:10px;border:1px solid #e5e7eb;padding:13px;margin-bottom:10px}
+.mmap h3{font-size:10px;font-weight:800;text-transform:uppercase;color:#6b7280;letter-spacing:.05em;margin-bottom:7px}
+.mg{display:flex;flex-wrap:wrap;gap:3px}
+.md{width:22px;height:22px;border-radius:4px;font-size:9px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:800;color:#fff;transition:transform .1s}
+.md:hover{transform:scale(1.2)}
+.md.u{background:#cbd5e1;color:#475569}.md.c{background:#16a34a}.md.w{background:#dc2626}
+.md.cur{outline:2.5px solid #f0c040;outline-offset:1px}
+.reset-btn{padding:5px 13px;border-radius:6px;border:2px solid #dc2626;background:#fff;color:#dc2626;font-size:11px;font-weight:700;cursor:pointer;margin-bottom:10px}
+.spin{width:38px;height:38px;border:3px solid #e0e7ff;border-top-color:#1a4f9c;border-radius:50%;animation:sp .8s linear infinite;margin:0 auto 14px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.loading{text-align:center;padding:40px 20px;background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.loading p{font-size:13px;color:#6b7280;font-weight:600}
+.loading .s2{font-size:11px;color:#9ca3af;margin-top:5px}
+</style>
+</head>
+<body>
+
+<div id="s-login">
+  <div class="card">
+    <div class="brand"><div class="brand-icon">S</div><div><h2>SimulaProCargo</h2><p>Concursos CNSC · Colombia 2026</p></div></div>
+    <h1>Accede a tu simulacro</h1>
+    <p class="sub">Ingresa con el correo y clave que recibiste al pagar.</p>
+    <div class="err" id="err">Correo o clave incorrectos.</div>
+    <div class="field"><label>Correo electrónico</label><input type="email" id="em" placeholder="tucorreo@gmail.com"/></div>
+    <div class="field"><label>Clave de acceso</label><input type="password" id="pw" placeholder="Ej: CNSC-2026-XX-9X4M" onkeydown="if(event.key==='Enter')login()"/></div>
+    <button class="btn" onclick="login()">Ingresar →</button>
+    <p class="login-footer">¿Problemas? Escríbenos por WhatsApp</p>
+  </div>
+</div>
+
+<div id="s-upload">
+  <div class="upload-card">
+    <div class="brand" style="margin-bottom:18px"><div class="brand-icon">S</div><div><h2>SimulaProCargo</h2><p>Concursos CNSC · Colombia 2026</p></div></div>
+    <h1>Sube tu convocatoria</h1>
+    <p class="sub">Adjunta el PDF de tu convocatoria o manual de funciones. La IA genera 160 preguntas <strong>exactas para tu cargo</strong>.</p>
+    <div class="drop-zone" id="dz">
+      <input type="file" id="fi" accept=".pdf,.doc,.docx" onchange="onFile(this)"/>
+      <div class="drop-icon">📄</div>
+      <div class="drop-title">Arrastra tu documento aquí</div>
+      <div class="drop-sub">PDF o Word · máx. 10MB · o haz clic para buscar</div>
+    </div>
+    <div class="file-ok" id="fok">
+      <span style="font-size:20px">📎</span>
+      <div style="flex:1"><div style="font-size:13px;font-weight:700;color:#14532d" id="fname"></div><div style="font-size:11px;color:#6b7280" id="fsize"></div></div>
+      <button onclick="removeFile()" style="background:none;border:none;font-size:16px;cursor:pointer">✕</button>
+    </div>
+    <div class="tip-box"><strong>¿Qué subir?</strong> El PDF oficial de la convocatoria CNSC, el manual de funciones de tu cargo, o la resolución de la entidad con las competencias evaluadas.</div>
+    <button class="btn" id="bgen" onclick="startApp()" disabled>Generar mi simulacro personalizado →</button>
+    <div class="skip-link">¿No tienes el PDF? <a onclick="startAppSinDoc()">Generar simulacro estándar</a></div>
+  </div>
+</div>
+
+<div id="s-app">
+  <div class="app-hdr">
+    <div><h1 id="atitle">SimulaProCargo</h1><p id="asub">160 preguntas · 5 bloques · Nivel experto CNSC</p></div>
+    <div class="app-hdr-r">
+      <span class="doc-badge" id="dbadge" style="display:none">📄 Doc analizado</span>
+      <span class="ubadge" id="ubadge">—</span>
+      <button class="exit-btn" onclick="logout()">Salir</button>
+    </div>
+  </div>
+  <div class="sbar">
+    <div class="si"><div class="sd" style="background:#6ee7b7"></div><span class="sv" id="sc">0</span>&nbsp;Correctas</div>
+    <div class="si"><div class="sd" style="background:#fca5a5"></div><span class="sv" id="sw">0</span>&nbsp;Incorrectas</div>
+    <div class="si"><div class="sd" style="background:#fcd34d"></div><span class="sv" id="sp">—</span>&nbsp;Pendientes</div>
+    <div class="si" style="margin-left:auto"><span class="sv" id="sa">—</span>&nbsp;<span style="font-size:10px;opacity:.8">% acierto</span></div>
+  </div>
+  <div class="prog-w">
+    <div class="prog-l"><span id="ptxt">Generando preguntas...</span><span id="ppct">0%</span></div>
+    <div class="prog-bg"><div class="prog-f" id="pf" style="width:0%"></div></div>
+  </div>
+  <div class="elim en" id="elim">⚠️ Bloque 1 (Funcionales): <span id="emsg">Sin responder — necesita ≥70% para aprobar</span></div>
+
+  <div class="calidad-panel">
+    <h3>🔍 Control de calidad — Distribución de respuestas &nbsp;<span id="cal-badge" style="font-size:10px;padding:2px 8px;border-radius:20px;background:#f1f5f9;color:#475569;font-weight:700">Generando...</span></h3>
+    <div class="calidad-grid">
+      <div class="cal-box" id="cal-a"><div class="letra" style="color:#1a4f9c">A</div><div class="cnt" id="cnt-a">—</div><div class="pct" id="pct-a">—%</div></div>
+      <div class="cal-box" id="cal-b"><div class="letra" style="color:#2d7a4f">B</div><div class="cnt" id="cnt-b">—</div><div class="pct" id="pct-b">—%</div></div>
+      <div class="cal-box" id="cal-c"><div class="letra" style="color:#7b3fa0">C</div><div class="cnt" id="cnt-c">—</div><div class="pct" id="pct-c">—%</div></div>
+      <div class="cal-box" id="cal-d"><div class="letra" style="color:#b85c1a">D</div><div class="cnt" id="cnt-d">—</div><div class="pct" id="pct-d">—%</div></div>
+    </div>
+    <div class="calidad-status pending" id="cal-status"><span>⏳ Verificando distribución en tiempo real...</span></div>
+  </div>
+
+  <div class="filters">
+    <button class="fb active" onclick="sf('all')">Todas</button>
+    <button class="fb" onclick="sf('unanswered')">Sin responder</button>
+    <button class="fb" onclick="sf('correct')">✓ Correctas</button>
+    <button class="fb" onclick="sf('wrong')">✗ Incorrectas</button>
+    <button class="fb" style="border-color:#1a4f9c" onclick="sf('b1')">Bloque 1</button>
+    <button class="fb" style="border-color:#2d7a4f" onclick="sf('b2')">Bloque 2</button>
+    <button class="fb" style="border-color:#7b3fa0" onclick="sf('b3')">Bloque 3</button>
+    <button class="fb" style="border-color:#b85c1a" onclick="sf('b4')">Bloque 4</button>
+    <button class="fb" style="border-color:#1a7a8a" onclick="sf('b5')">Bloque 5</button>
+  </div>
+
+  <div id="qa">
+    <div class="loading"><div class="spin"></div><p>Analizando tu documento y generando preguntas...</p><p class="s2">Preguntas personalizadas para tu cargo — nivel experto CNSC</p></div>
+  </div>
+
+  <div class="nav">
+    <button class="nb prev" id="bprev" onclick="nav(-1)" disabled>◀ Anterior</button>
+    <span class="ni" id="ni">—</span>
+    <button class="nb next" id="bnext" onclick="nav(1)">Siguiente ▶</button>
+  </div>
+  <button class="reset-btn" onclick="resetAll()">↺ Reiniciar simulacro</button>
+  <div class="bprog"><h3>Progreso por Bloque</h3><div id="brows"></div></div>
+  <div class="mmap"><h3>Mapa de Preguntas</h3><div class="mg" id="mg"></div></div>
+</div>
+
+<script>
+// ═══════════════════════════════════
+// USUARIOS
+// ═══════════════════════════════════
+// ═══════════════════════════════════
+// USUARIOS — formato: {email, pass, nombre, cargo, activacion}
+// activacion: fecha en que enviaste la clave (YYYY-MM-DD)
+// Acceso válido por 4 meses desde esa fecha
+// ═══════════════════════════════════
+const MESES_ACCESO = 4;
+
+function verificarVencimiento(user) {
+  if (!user.activacion) return { vigente: true, diasRestantes: 120, mensaje: "" };
+  const hoy = new Date();
+  const inicio = new Date(user.activacion);
+  const vence = new Date(inicio);
+  vence.setMonth(vence.getMonth() + MESES_ACCESO);
+  const diasRestantes = Math.ceil((vence - hoy) / (1000 * 60 * 60 * 24));
+  const vigente = hoy <= vence;
+  const fechaVence = vence.toLocaleDateString("es-CO", {day:"2-digit", month:"long", year:"numeric"});
+  return { vigente, diasRestantes, fechaVence, mensaje: vigente
+    ? diasRestantes <= 15
+      ? `⚠️ Tu acceso vence el ${fechaVence} (${diasRestantes} días restantes)`
+      : `✅ Acceso vigente hasta el ${fechaVence}`
+    : `❌ Tu acceso venció el ${fechaVence}` };
+}
+
+// Usuarios validados dinámicamente desde Google Sheets via /.netlify/functions/auth
+
+// ═══════════════════════════════════
+// TABLA DE DISTRIBUCIÓN EXACTA DEL PROMPT
+// Bloques A, B, C, D — 40 letras cada uno = 160 preguntas
+// ═══════════════════════════════════
+const DIST_TABLE = {
+  A: "C,A,D,B,A,C,B,D,C,A,D,B,C,A,D,B,A,C,D,B,C,A,D,B,B,D,A,C,D,B,C,A,B,D,A,C,D,A,B,C".split(','),
+  B: "D,C,B,A,C,D,A,B,D,C,B,A,C,B,D,A,B,C,A,D,A,D,C,B,D,A,B,C,A,D,C,B,C,A,D,B,D,C,A,B".split(','),
+  C: "B,A,C,D,C,B,D,A,A,C,B,D,B,D,A,C,D,B,C,A,C,D,A,B,A,B,D,C,D,C,B,A,B,D,C,A,C,A,D,B".split(','),
+  D: "A,D,B,C,B,A,C,D,C,B,D,A,D,C,A,B,B,A,D,C,A,C,B,D,D,A,C,B,C,D,B,A,A,B,C,D,B,C,A,D".split(','),
+};
+
+// Tabla completa de 160 letras: A(1-40) + B(41-80) + C(81-120) + D(121-160)
+const FULL_SEQ = [...DIST_TABLE.A, ...DIST_TABLE.B, ...DIST_TABLE.C, ...DIST_TABLE.D];
+
+// ═══════════════════════════════════
+// BLOQUES
+// ═══════════════════════════════════
+const BLOCKS = {
+  1:{label:"Bloque 1 — Competencias Funcionales",     color:"#1a4f9c",elim:true},
+  2:{label:"Bloque 2 — Funcionales Básicas",          color:"#2d7a4f",elim:false},
+  3:{label:"Bloque 3 — Comportamentales",             color:"#7b3fa0",elim:false},
+  4:{label:"Bloque 4 — Normativa y Marco Legal",      color:"#b85c1a",elim:false},
+  5:{label:"Bloque 5 — Servicio al Ciudadano",        color:"#1a7a8a",elim:false},
+};
+
+// ═══════════════════════════════════
+// PLAN DE GENERACIÓN — del prompt exacto
+// [bloque, temática, normativa, cantidad]
+// ═══════════════════════════════════
+// PLAN DINÁMICO — se construye desde el PDF del usuario
+// La función buildPlan() lo genera al cargar el documento
+let PLAN = [];
+let isDIAN = false;
+
+function buildPlan(docContent) {
+  const doc = docContent.toLowerCase();
+  isDIAN = doc.includes('dian') || doc.includes('ft-tah-1824') || doc.includes('gestor i') || doc.includes('gestor ii') || doc.includes('registro único tributario') || doc.includes('rut:');
+
+  if (isDIAN) {
+    // ── PLAN DIAN — se adapta a las competencias funcionales del PDF ──
+    // Bloque 1: detecta competencias funcionales específicas del cargo DIAN
+    const planB1 = [];
+    const compDIAN = [
+      ["RUT y Registro Único Tributario","Decreto 1625/2016, Resolución DIAN 000012/2008"],
+      ["Dirección y Administración de Canales de Servicio","Resolución DIAN, procedimientos de servicio"],
+      ["Orientación Normativa a los Clientes TACI","Estatuto Tributario, procedimientos DIAN"],
+      ["Contratación Pública","Ley 80/1993, Ley 1150/2007, Decreto 1082/2015"],
+      ["Gestión Documental","Ley 594/2000, Acuerdos AGN, Decreto 1080/2015"],
+      ["Administración Custodia y Disposición de Mercancías","Decreto 1165/2019, Resolución DIAN 046/2019"],
+      ["Control de Ingresos, Almacenamiento y Registro de Mercancías","Decreto 1165/2019, Resolución DIAN 046/2019"],
+      ["Administración de Infraestructura","Decreto 1082/2015, normativa DIAN"],
+      ["Administración de los Servicios","Normativa DIAN, procedimientos logísticos"],
+      ["Operación SIIF Nación II","SIIF Nación II, Decreto 1068/2015"],
+    ];
+    // Filtra las que aparecen en el PDF y distribuye 88 preguntas
+    const activas = compDIAN.filter(c => doc.includes(c[0].toLowerCase().split(' ')[0]) || true).slice(0, 7);
+    const base = Math.floor(88 / activas.length);
+    let resto = 88 - base * activas.length;
+    activas.forEach((c, i) => planB1.push([1, c[0], c[1], base + (i < resto ? 1 : 0)]));
+
+    PLAN = [
+      ...planB1,
+      // BLOQUE 2 — Funcionales Básicas DIAN (24 preguntas)
+      [2,"Conceptos Evasión, Elusión y Contrabando","Ley 1762/2015, Estatuto Tributario",4],
+      [2,"Ley de Transparencia y Acceso a la Información","Ley 1712/2014, Decreto 103/2015",3],
+      [2,"Herramientas Informáticas DIAN","MUISCA DIAN, Gobierno Digital Decreto 1008/2018",4],
+      [2,"Gestión Documental","Ley 594/2000, Acuerdos AGN",3],
+      [2,"MIPG — Modelo Integrado de Planeación y Gestión","Decreto 1499/2017",3],
+      [2,"Código de Buen Gobierno y Código de Integridad","Decreto 189/2020, Resolución DIAN",3],
+      [2,"Cultura de la Contribución y Función Asistencia al Cliente","Estatuto Tributario, procedimientos DIAN",4],
+      // BLOQUE 3 — Comportamentales DIAN con niveles (24 preguntas)
+      [3,"Comportamiento Ético nivel 4","Ley 1952/2019, Código de Integridad Decreto 189/2020",7],
+      [3,"Orientación al Logro nivel 3","Competencias comportamentales DAFP, Decreto 815/2018",5],
+      [3,"Orientación al Usuario y al Ciudadano nivel 3","Ley 1437/2011, Política Servicio al Ciudadano",6],
+      [3,"Comunicación Efectiva nivel 3","Competencias comportamentales DAFP",6],
+      // BLOQUE 4 — Normativa (16 preguntas)
+      [4,"Constitución Política","Arts. 1-10, 13-29, 83-94, 113-131 CP",4],
+      [4,"Ley 1437/2011 CPACA","Títulos I II III, Capítulos I V VI VII VIII",5],
+      [4,"Principios Función Pública y Código Buen Gobierno","Ley 909/2004, Código Buen Gobierno DIAN",4],
+      [4,"Generalidades de los Recursos Administrativos","Arts. 74-82 Ley 1437/2011",3],
+      // BLOQUE 5 — Servicio al Ciudadano (8 preguntas)
+      [5,"Sistema PQRSF y Atención al Ciudadano","Ley 1437/2011 Arts. 13-33, Decreto 2623/2009",3],
+      [5,"Políticas Estatales de Servicio al Ciudadano","CONPES 3785/2013, Decreto 1166/2016",3],
+      [5,"Generalidades de los Recursos Administrativos","Arts. 74-82 Ley 1437/2011",2],
+    ];
+  } else {
+    // ── PLAN GENERAL — se adapta a cualquier entidad CNSC ──
+    PLAN = [
+      // BLOQUE 1 — Funciones esenciales y competencias funcionales del PDF (88 preguntas)
+      [1,"Funciones Esenciales del cargo — aplicación correcta de procedimientos","Normativa extraída del PDF",18],
+      [1,"Funciones Esenciales del cargo — casos límite y situaciones atípicas","Normativa extraída del PDF",18],
+      [1,"Funciones Esenciales del cargo — decisiones bajo presión","Normativa extraída del PDF",17],
+      [1,"Competencias Funcionales específicas — coordinación interinstitucional","Normativa extraída del PDF",17],
+      [1,"Competencias Funcionales específicas — normativa sectorial del cargo","Normativa extraída del PDF",18],
+      // BLOQUE 2 — Funcionales Básicas / Conocimientos esenciales (24 preguntas)
+      [2,"Competencias Funcionales Básicas del cargo","Normativa extraída del PDF",8],
+      [2,"Herramientas Informáticas y Gestión Documental","Gobierno Digital Decreto 1008/2018, Ley 594/2000",8],
+      [2,"MIPG y Principios de la Gestión Pública","Decreto 1499/2017, Ley 909/2004",8],
+      // BLOQUE 3 — Comportamentales (24 preguntas)
+      [3,"Competencias Comportamentales Comunes — Aprendizaje continuo y Orientación a resultados","Competencias comportamentales DAFP, Decreto 815/2018",8],
+      [3,"Competencias Comportamentales Comunes — Orientación al usuario y Compromiso con la organización","Ley 1437/2011, Política Servicio al Ciudadano",8],
+      [3,"Competencias Comportamentales por nivel jerárquico","Competencias comportamentales DAFP",8],
+      // BLOQUE 4 — Normativa (16 preguntas)
+      [4,"Constitución Política","Arts. 1-10, 13-29, 83-94, 113-131 CP",4],
+      [4,"Ley 1437/2011 CPACA","Títulos I II III, Capítulos I V VI VII VIII",5],
+      [4,"Principios de la Función Pública y Código de Buen Gobierno","Ley 909/2004, Decreto 1083/2015",4],
+      [4,"Generalidades de los Recursos Administrativos y normativa sectorial del cargo","Arts. 74-82 Ley 1437/2011, normativa extraída del PDF",3],
+      // BLOQUE 5 — Servicio al Ciudadano (8 preguntas)
+      [5,"Sistema PQRSF y Atención al Ciudadano","Ley 1437/2011 Arts. 13-33, Decreto 2623/2009",3],
+      [5,"Políticas Estatales de Servicio al Ciudadano","CONPES 3785/2013, Decreto 1166/2016",3],
+      [5,"Generalidades de los Recursos Administrativos","Arts. 74-82 Ley 1437/2011",2],
+    ];
+  }
+}
+
+let user=null,docText='',docName='',questions=[],answers={},fil='all',fids=[],idx=0,generating=false;
+
+async function login(){
+  const e=document.getElementById('em').value.trim().toLowerCase();
+  const p=document.getElementById('pw').value.trim();
+  const btn=document.querySelector('#s-login .btn');
+  btn.disabled=true;btn.textContent='Verificando...';
+  try{
+    const resp=await fetch('/.netlify/functions/generate',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({action:'auth',email:e,pass:p})
+    });
+    const data=await resp.json();
+    if(!resp.ok||!data.ok){
+      document.getElementById('err').textContent='Correo o clave incorrectos.';
+      document.getElementById('err').classList.add('show');
+      btn.disabled=false;btn.textContent='Ingresar →';
+      return;
+    }
+    document.getElementById('err').classList.remove('show');
+    const u={email:e,pass:p,nombre:data.nombre,cargo:data.cargo,activacion:data.activacion};
+    const venc=verificarVencimiento(u);
+    if(!venc.vigente){
+      document.getElementById('err').textContent=venc.mensaje+' — Renueva tu acceso: checkout.bold.co/payment/LNK_SR721H9QT9';
+      document.getElementById('err').classList.add('show');
+      btn.disabled=false;btn.textContent='Ingresar →';
+      return;
+    }
+    user=u;user._vencimiento=venc;
+    document.getElementById('s-login').style.display='none';
+    document.getElementById('s-upload').style.display='block';
+  }catch(err){
+    document.getElementById('err').textContent='Error de conexión. Intenta de nuevo.';
+    document.getElementById('err').classList.add('show');
+    btn.disabled=false;btn.textContent='Ingresar →';
+  }
+}
+
+function onFile(inp){
+  const f=inp.files[0];if(!f)return;
+  docName=f.name;
+  document.getElementById('fname').textContent=f.name;
+  document.getElementById('fsize').textContent=(f.size/1024/1024).toFixed(2)+' MB';
+  document.getElementById('fok').classList.add('show');
+  document.getElementById('bgen').disabled=false;
+  const r=new FileReader();
+  r.onload=e=>{
+    const arr=new Uint8Array(e.target.result);
+    let txt='';
+    for(let i=0;i<Math.min(arr.length,60000);i++){const c=arr[i];if(c>=32&&c<127)txt+=String.fromCharCode(c);else if(c===10||c===13)txt+=' ';}
+    docText=txt.replace(/[^\w\sáéíóúÁÉÍÓÚñÑ.,;:()\-\/]/g,' ').replace(/\s{3,}/g,' ').substring(0,10000);
+    buildPlan(docText);
+  };
+  r.readAsArrayBuffer(f);
+}
+function removeFile(){docText='';docName='';document.getElementById('fok').classList.remove('show');document.getElementById('fi').value='';document.getElementById('bgen').disabled=true;}
+const dz=document.getElementById('dz');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over');const f=e.dataTransfer.files[0];if(f){const dt=new DataTransfer();dt.items.add(f);document.getElementById('fi').files=dt.files;onFile(document.getElementById('fi'));}});
+
+function startApp(){
+  document.getElementById('s-upload').style.display='none';
+  document.getElementById('s-app').style.display='block';
+  document.getElementById('ubadge').textContent=user.nombre;
+  
+  // Badge de días restantes
+  const vencInfo = user._vencimiento || verificarVencimiento(user);
+  const vbadge = document.createElement('span');
+  vbadge.style.cssText = 'font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;margin-left:4px;' + 
+    (vencInfo.diasRestantes <= 15 ? 'background:#fef3c7;color:#92400e;' : 'background:rgba(255,255,255,.15);color:#fff;');
+  vbadge.textContent = '⏳ ' + vencInfo.diasRestantes + ' días restantes';
+  document.getElementById('ubadge').insertAdjacentElement('afterend', vbadge);
+  
+  // Alerta si quedan menos de 15 días
+  if (vencInfo.diasRestantes <= 15) {
+    const alerta = document.createElement('div');
+    alerta.style.cssText = 'background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:9px 13px;font-size:12px;font-weight:700;color:#92400e;margin-bottom:10px;';
+    alerta.innerHTML = '⚠️ ' + vencInfo.mensaje + ' — <a href="https://checkout.bold.co/payment/LNK_A0I8T8NF32" style="color:#92400e">Renueva aquí</a>';
+    document.getElementById('s-app').insertBefore(alerta, document.getElementById('s-app').firstChild.nextSibling);
+  }
+  document.getElementById('atitle').textContent='SimulaProCargo · '+user.cargo;
+  if(docName){document.getElementById('dbadge').style.display='inline';document.getElementById('asub').textContent='160 preguntas desde: '+docName;}
+  loadAll();
+}
+function startAppSinDoc(){docText='';docName='';startApp();}
+
+// jobId único por sesión de generación (identifica este simulacro en el guardadero)
+let JOB_ID = null;
+
+// Dispara el motor de fondo para una parte (no espera el resultado).
+async function dispararParte(index, prompt){
+  // 1) Guardar el prompt en el guardadero con una función NORMAL
+  //    (las normales sí reciben bien el texto largo por POST).
+  await fetch('/.netlify/functions/save-prompt',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ jobId: JOB_ID, index, prompt })
+  });
+  // 2) Disparar el motor de fondo SOLO con la referencia (jobId, index).
+  //    El motor irá al guardadero y recogerá el prompt él mismo.
+  //    (No le mandamos el prompt aquí porque las background functions
+  //     no reciben bien los datos largos.)
+  await fetch('/.netlify/functions/generate-background',{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ jobId: JOB_ID, index })
+  });
+}
+
+// Espera (consultando el guardadero) hasta que una parte esté lista.
+// Devuelve el texto crudo de la IA, o lanza error si la parte falló.
+async function esperarParte(index){
+  const MAX_INTENTOS = 90;     // 90 intentos
+  const ESPERA_MS    = 4000;   // cada 4s = hasta 6 minutos por parte
+  for(let intento=0; intento<MAX_INTENTOS; intento++){
+    await new Promise(r=>setTimeout(r, ESPERA_MS));
+    try{
+      const resp=await fetch('/.netlify/functions/status',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ jobId: JOB_ID, index })
+      });
+      const data=await resp.json();
+      if(data.listo){
+        if(data.resultado && data.resultado.ok){
+          return data.resultado.text;
+        } else {
+          throw new Error('La parte '+index+' falló: '+((data.resultado&&data.resultado.error)||'desconocido'));
+        }
+      }
+    }catch(e){
+      if(e.message && e.message.indexOf('La parte')===0) throw e;
+      // error de red puntual: reintenta en el siguiente ciclo
+    }
+  }
+  throw new Error('Tiempo agotado esperando la parte '+index);
+}
+
+async function generateBatch(planEntry, globalStart){
+  const [blk, tema, normativa, qty] = planEntry;
+
+  // Extraer las letras exactas de FULL_SEQ para estas posiciones
+  const letters = [];
+  for(let i=0; i<qty; i++){
+    const pos = globalStart + i - 1; // índice 0-based
+    letters.push(pos < FULL_SEQ.length ? FULL_SEQ[pos] : 'A');
+  }
+
+  const docCtx = docText.length > 100
+    ? isDIAN
+      ? `\n\nDOCUMENTO DEL USUARIO (DIAN FT-TAH-1824):\n"""\n${docText.substring(0, 3000)}\n"""\nUsa este documento para confirmar el cargo exacto y adaptar los casos prácticos a la realidad del funcionario.`
+      : `\n\nDOCUMENTO COMPLETO DEL USUARIO:\n"""\n${docText.substring(0, 6000)}\n"""\nEste es el documento oficial del cargo. Extrae de aquí las funciones esenciales, competencias, normativa y contexto real de la entidad para generar preguntas 100% personalizadas. NO uses información genérica — basa cada pregunta en lo que dice este documento.`
+    : '';
+
+  const letterInstr = letters.map((l,i)=>`P${i+1}=correcta en ${l}(índice ${['A','B','C','D'].indexOf(l)})`).join(' | ');
+
+  const rolDIAN = `Actúa como experto en concursos de méritos del CNSC de Colombia, con especialización en las convocatorias de la DIAN (Dirección de Impuestos y Aduanas Nacionales).`;
+  const rolGeneral = `Actúa como experto en concursos de méritos del CNSC (Comisión Nacional del Servicio Civil) de Colombia.`;
+
+  const instrDIAN = blk===1
+    ? `Por cada función o competencia genera situaciones desde distintos ángulos: aplicación correcta del procedimiento, error procedimental, caso límite, decisión bajo presión, coordinación interinstitucional, y aplicación de normativa DIAN específica. NUNCA repitas el mismo escenario, situación o artículo.`
+    : blk===2
+    ? `Incluye conceptos propios DIAN cuando apliquen: Evasión, Elusión, Contrabando, RUT, TACI, SIIF, cultura de la contribución, obligaciones tributarias, aduaneras y cambiarias.`
+    : blk===3
+    ? `Cada pregunta debe presentar una situación real en la DIAN que evalúe la competencia en el nivel numérico exacto indicado en la temática.`
+    : ``;
+
+  const instrGeneral = blk===1
+    ? `Por cada función o competencia genera situaciones desde distintos ángulos: aplicación correcta del procedimiento, error procedimental, caso límite, decisión bajo presión, coordinación con otras áreas u organismos, y aplicación de normativa sectorial del cargo. NUNCA repitas el mismo escenario, situación o artículo.`
+    : blk===2
+    ? `Usa los conocimientos básicos esenciales y competencias funcionales básicas extraídos del documento. Si el PDF no tiene esta sección, usa temas transversales de la función pública.`
+    : blk===3
+    ? `Si las competencias tienen nivel numérico, evalúa en ese nivel exacto. Si no tienen nivel, distribuye equitativamente entre todas las competencias encontradas en el documento.`
+    : ``;
+
+  const entidad = isDIAN ? 'la Dirección de Impuestos y Aduanas Nacionales de Colombia (DIAN)' : 'la entidad del documento adjunto';
+  const rol = isDIAN ? rolDIAN : rolGeneral;
+  const instrExtra = isDIAN ? instrDIAN : instrGeneral;
+
+  const prompt = `${rol}
+
+Genera exactamente ${qty} preguntas tipo simulacro NIVEL EXPERTO para ${entidad}.
+Cargo: ${user.cargo}
+Bloque: ${BLOCKS[blk].label}
+Temática: ${tema}
+Normativa: ${normativa}
+Preguntas ${globalStart} a ${globalStart+qty-1} del simulacro total (160 preguntas en total).
+${docCtx}
+
+${instrExtra}
+
+SECUENCIA OBLIGATORIA DE RESPUESTAS CORRECTAS:
+${letterInstr}
+
+ESTRUCTURA OBLIGATORIA DE CADA PREGUNTA:
+- Caso práctico real situado en ${entidad}
+- El funcionario actúa en el rol exacto del cargo indicado en el documento
+- 4 opciones donde TODAS citan normativa colombiana real y vigente
+- Distractores técnicamente elaborados — ninguna opción descartable a simple vista
+- La opción correcta DEBE coincidir con la letra asignada arriba
+- Construye el contenido de cada opción PARA que la letra asignada sea la técnicamente correcta
+- La sustentación cita el artículo y norma específica
+
+PROHIBIDO:
+- Más de 2 respuestas correctas consecutivas en la misma letra
+- Que una letra supere el 35% del bloque
+- Mover la respuesta correcta a otra letra diferente a la asignada
+
+RESPONDE SOLO con JSON válido sin texto adicional ni markdown:
+[{"q":"enunciado completo caso práctico","opts":["opción A con normativa","opción B con normativa","opción C con normativa","opción D con normativa"],"correct":INDEX,"sust":"La respuesta correcta es [LETRA] porque [explicación detallada] según [Artículo X Ley/Decreto Y]."}]
+
+Índices exactos: ${letters.map((l,i)=>`P${i+1} correct=${['A','B','C','D'].indexOf(l)}`).join(', ')}.`;
+
+  // Devolvemos el prompt armado. La IA la llama el motor de fondo.
+  return { prompt, letters, blk, tema, normativa, qty, globalStart };
+}
+
+// Procesa el texto crudo que devolvió la IA y aplica la auto-corrección de letras.
+// (Esta es exactamente la lógica que antes estaba al final de generateBatch.)
+function procesarTexto(text, info){
+  const { letters, blk, tema, normativa, qty, globalStart } = info;
+  const arr = JSON.parse(text.replace(/```json|```/g,'').trim());
+
+  return arr.slice(0,qty).map((q,i)=>{
+    const expectedIdx = ['A','B','C','D'].indexOf(letters[i]);
+    if(q.correct !== expectedIdx){
+      const opts=[...q.opts];
+      const tmp=opts[expectedIdx]; opts[expectedIdx]=opts[q.correct]; opts[q.correct]=tmp;
+      return{...q,opts,correct:expectedIdx};
+    }
+    return q;
+  }).map((q,i)=>({
+    id: globalStart+i,
+    blk, bloque:BLOCKS[blk].label, tematica:tema, normativa,
+    enunciado:q.q,
+    opciones:{A:q.opts[0],B:q.opts[1],C:q.opts[2],D:q.opts[3]},
+    correcta:['A','B','C','D'][q.correct],
+    sustentacion:q.sust,
+  }));
+}
+
+// Parte cualquier bloque grande en sub-bloques de máximo MAX_QTY preguntas,
+// para que cada llamada termine dentro del límite de tiempo de la función (60s).
+function expandirPlan(plan){
+  const MAX_QTY = 6;
+  const out = [];
+  for(const entry of plan){
+    const [blk, tema, normativa, qty] = entry;
+    let restante = qty;
+    while(restante > 0){
+      const trozo = Math.min(MAX_QTY, restante);
+      out.push([blk, tema, normativa, trozo]);
+      restante -= trozo;
+    }
+  }
+  return out;
+}
+
+async function loadAll(){
+  if(generating)return;
+  generating=true;
+
+  // jobId único para esta generación
+  JOB_ID = (user.email.replace(/[^a-z0-9]/gi,'_')) + '_' + Date.now();
+
+  const PLAN_EXPANDIDO = expandirPlan(PLAN);
+
+  // ── FASE 1: armar cada parte y DISPARARLA al motor de fondo (en tandas) ──
+  const partes = [];
+  let globalNum = 1;
+  for(let i=0; i<PLAN_EXPANDIDO.length; i++){
+    if(globalNum>160) break;
+    const info = generateBatch(PLAN_EXPANDIDO[i], globalNum);
+    partes.push(info);
+    globalNum += info.qty;
+  }
+  // Disparar en tandas de 5 con una pausa, para no saturar la API de Anthropic.
+  const TANDA = 5;
+  for(let i=0; i<partes.length; i+=TANDA){
+    const grupo = partes.slice(i, i+TANDA);
+    await Promise.all(grupo.map((info, j)=>{
+      return dispararParte(i+j, info.prompt).catch(e=>console.error('No se pudo disparar parte '+(i+j), e));
+    }));
+    await new Promise(r=>setTimeout(r, 1500));
+  }
+
+  // ── FASE 2: recoger cada parte en orden y mostrarla apenas llega ──
+  for(let i=0; i<partes.length; i++){
+    try{
+      const text = await esperarParte(i);
+      const batch = procesarTexto(text, partes[i]);
+      questions.push(...batch);
+      updateProg(questions.length);
+      actualizarCalidad();
+      renderQ();renderMM();renderBP();
+    }catch(e){
+      console.error('Error en parte '+i, e);
+      // seguimos con las demás partes aunque una falle
+    }
+  }
+
+  generating=false;
+  actualizarCalidad();
+  updateStats();
+}
+
+function updateProg(n){
+  const pct=Math.round(n/160*100);
+  document.getElementById('pf').style.width=pct+'%';
+  document.getElementById('ppct').textContent=pct+'%';
+  document.getElementById('ptxt').textContent=`${n} de 160 preguntas generadas`;
+  document.getElementById('sp').textContent=160-Object.keys(answers).length;
+}
+
+function actualizarCalidad(){
+  const total=questions.length;
+  const count={A:0,B:0,C:0,D:0};
+  questions.forEach(q=>count[q.correcta]=(count[q.correcta]||0)+1);
+  ['A','B','C','D'].forEach(l=>{
+    const n=count[l]||0;
+    const pct=total>0?Math.round(n/total*100):0;
+    document.getElementById('cnt-'+l.toLowerCase()).textContent=n;
+    document.getElementById('pct-'+l.toLowerCase()).textContent=pct+'%';
+    const box=document.getElementById('cal-'+l.toLowerCase());
+    box.className='cal-box';
+    if(pct>40)box.classList.add('bad');
+    else if(pct>33)box.classList.add('warn');
+    else box.classList.add('ok');
+  });
+  const badge=document.getElementById('cal-badge');
+  const status=document.getElementById('cal-status');
+  if(generating||total<10){
+    badge.style.cssText='font-size:10px;padding:2px 8px;border-radius:20px;background:#fef3c7;color:#92400e;font-weight:700';
+    badge.textContent='Verificando...';
+    status.className='calidad-status pending';
+    status.innerHTML='<span>⏳ Verificando distribución — generando preguntas personalizadas...</span>';
+    return;
+  }
+  // Verificar consecutivas
+  let consec=false,p1='',p2='';
+  for(const q of questions){if(q.correcta===p1&&q.correcta===p2){consec=true;break;}p2=p1;p1=q.correcta;}
+  const max=Math.max(...Object.values(count));
+  const pctMax=total>0?Math.round(max/total*100):0;
+  if(pctMax<=35&&!consec){
+    badge.style.cssText='font-size:10px;padding:2px 8px;border-radius:20px;background:#d1fae5;color:#065f46;font-weight:700';
+    badge.textContent='✓ Calidad verificada';
+    status.className='calidad-status pass';
+    status.innerHTML='<span>✅ Distribución correcta · Ninguna letra supera 35% · Sin consecutivas problemáticas</span>';
+  } else {
+    badge.style.cssText='font-size:10px;padding:2px 8px;border-radius:20px;background:#fee2e2;color:#991b1b;font-weight:700';
+    badge.textContent='⚠️ Autocorregido';
+    status.className='calidad-status fail';
+    status.innerHTML=`<span>⚠️ Distribución ajustada automáticamente — máximo detectado: ${pctMax}%${consec?' · Se corrigieron consecutivas':''}</span>`;
+  }
+}
+
+function getF(){
+  return questions.filter(q=>{
+    if(fil==='all')return true;
+    if(fil==='unanswered')return!(q.id in answers);
+    if(fil==='correct')return answers[q.id]===q.correcta;
+    if(fil==='wrong')return(q.id in answers)&&answers[q.id]!==q.correcta;
+    return q.blk===parseInt(fil.replace('b',''));
+  }).map(q=>q.id);
+}
+function sf(f){
+  fil=f;
+  document.querySelectorAll('.fb').forEach((b,i)=>b.classList.toggle('active',['all','unanswered','correct','wrong','b1','b2','b3','b4','b5'][i]===f));
+  fids=getF();idx=0;renderQ();renderMM();
+}
+function nav(d){fids=getF();idx=Math.max(0,Math.min(fids.length-1,idx+d));renderQ();}
+
+function renderQ(){
+  fids=getF();
+  if(!fids.length){document.getElementById('qa').innerHTML='<div style="text-align:center;padding:28px;background:#fff;border-radius:12px;font-size:13px;color:#6b7280">No hay preguntas en este filtro aún.</div>';return;}
+  const qid=fids[idx];
+  const q=questions.find(x=>x.id===qid);if(!q)return;
+  const bl=BLOCKS[q.blk];
+  const answered=qid in answers;
+  const L=['A','B','C','D'];
+  const optsH=L.map(l=>{
+    let cls='opt';
+    if(answered&&l===answers[qid])cls+=answers[qid]===q.correcta?' ok':' bad';
+    else if(answered)cls+=' grey';
+    return`<button class="${cls}"${answered?' disabled':''}onclick="answer(${qid},'${l}')"><span class="ol">${l}.</span><span>${q.opciones[l]}</span></button>`;
+  }).join('');
+  const sustH=answered?`<div class="sust show"><div class="sl">📋 Sustentación Normativa</div>${q.sustentacion}</div>`:'';
+  document.getElementById('qa').innerHTML=`<div class="qcard"><div class="qmeta"><span class="bb" style="background:${bl.color}">${bl.label}${bl.elim?' ⚠️ ELIMINATORIO':''}</span><span class="tb">${q.tematica}</span><span class="norm-badge">${q.normativa.split(',')[0]}</span></div><div class="qctr">Pregunta ${q.id} de ${questions.length} · ${idx+1} de ${fids.length} en vista actual</div><div class="qtxt">${q.enunciado}</div><div class="opts">${optsH}</div>${sustH}</div>`;
+  document.getElementById('ni').textContent=`${idx+1} / ${fids.length}`;
+  document.getElementById('bprev').disabled=idx===0;
+  const last=idx>=fids.length-1;
+  document.getElementById('bnext').disabled=last&&!generating;
+  document.getElementById('bnext').textContent=last?(generating?'Generando... ⏳':'Fin ✓'):'Siguiente ▶';
+  updateStats();updateElim();renderMM();renderBP();
+}
+
+function answer(qid,l){if(qid in answers)return;answers[qid]=l;renderQ();}
+
+function updateStats(){
+  const c=questions.filter(q=>answers[q.id]===q.correcta).length;
+  const w=questions.filter(q=>(q.id in answers)&&answers[q.id]!==q.correcta).length;
+  const tot=c+w;
+  document.getElementById('sc').textContent=c;
+  document.getElementById('sw').textContent=w;
+  document.getElementById('sp').textContent=questions.length-tot;
+  document.getElementById('sa').textContent=tot?Math.round(c/tot*100)+'%':'—';
+  const pct=questions.length?Math.round(tot/questions.length*100):0;
+  document.getElementById('pf').style.width=pct+'%';
+  document.getElementById('ppct').textContent=pct+'%';
+  document.getElementById('ptxt').textContent=`${tot} respondidas de ${questions.length}`;
+}
+
+function updateElim(){
+  const b1=questions.filter(q=>q.blk===1);
+  const c=b1.filter(q=>answers[q.id]===q.correcta).length;
+  const a=b1.filter(q=>q.id in answers).length;
+  const need=Math.ceil(b1.length*.7);
+  const el=document.getElementById('elim');
+  const msg=document.getElementById('emsg');
+  if(!a){el.className='elim en';msg.textContent=`Sin responder — necesita ≥70% (≥${need} de ${b1.length} correctas)`;}
+  else if(c>=need){el.className='elim ep';msg.textContent=`✓ APROBADO: ${c}/${b1.length} (${Math.round(c/b1.length*100)}%) — supera el 70%`;}
+  else{el.className='elim ef';msg.textContent=`✗ NO APROBADO: ${c}/${b1.length} (${Math.round(c/b1.length*100)}%) — necesita ${need-c} más`;}
+}
+
+function renderBP(){
+  const c=document.getElementById('brows');c.innerHTML='';
+  for(const[k,bl] of Object.entries(BLOCKS)){
+    const qs=questions.filter(q=>q.blk===parseInt(k));
+    const corr=qs.filter(q=>answers[q.id]===q.correcta).length;
+    const pct=qs.length?Math.round(corr/qs.length*100):0;
+    c.innerHTML+=`<div class="bpr"><div class="bpl" title="${bl.label}">${bl.label.split(' — ')[1]||bl.label}</div><div class="bpb"><div class="bpf" style="width:${pct}%;background:${bl.color}"></div></div><div class="bpp" style="color:${bl.color}">${pct}%</div><div style="font-size:10px;color:#6b7280;min-width:45px">${corr}/${qs.length}</div></div>`;
+  }
+}
+
+function renderMM(){
+  const mm=document.getElementById('mg');mm.innerHTML='';
+  const qid=fids.length>0?fids[idx]:null;
+  questions.forEach(q=>{
+    const d=document.createElement('div');d.className='md';
+    if(answers[q.id]===q.correcta)d.classList.add('c');
+    else if(q.id in answers)d.classList.add('w');
+    else d.classList.add('u');
+    if(q.id===qid)d.classList.add('cur');
+    d.title=`P${q.id}: ${q.tematica} | Correcta: ${q.correcta} | Asignada: ${FULL_SEQ[q.id-1]}`;
+    d.textContent=q.id;
+    d.onclick=()=>{sf('all');const i=fids.indexOf(q.id);if(i!==-1){idx=i;renderQ();}};
+    mm.appendChild(d);
+  });
+}
+
+function resetAll(){
+  if(!confirm('¿Reiniciar todas las respuestas del simulacro?'))return;
+  answers={};idx=0;fil='all';
+  document.querySelectorAll('.fb').forEach((b,i)=>b.classList.toggle('active',i===0));
+  fids=getF();renderQ();renderMM();
+}
+
+function logout(){
+  user=null;docText='';docName='';questions=[];answers={};idx=0;generating=false;
+  document.getElementById('s-app').style.display='none';
+  document.getElementById('s-upload').style.display='none';
+  document.getElementById('s-login').style.display='block';
+  document.getElementById('pw').value='';
+  document.getElementById('fok').classList.remove('show');
+  document.getElementById('bgen').disabled=true;
+}
+</script>
+</body>
+</html>
